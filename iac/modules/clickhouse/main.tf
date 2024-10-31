@@ -6,11 +6,19 @@ data "hcloud_network" "private_network" {
   name = "private-network"
 }
 
+data "template_file" "cloud_init" {
+  template = file("${path.module}/cloudinit/base.yml.tftpl")
+  
+  vars = {
+    clickhouse_password = var.clickhouse_password
+  }
+}
+
 resource "hcloud_server" "clickhouse" {
   count       = var.server_count
-  name        = var.server_count > 1 ? "clickhouse-${count.index + 1}" : "clickhouse"
-  image       = var.operating_system
+  name        = "clickhouse-${count.index + 1}"
   server_type = var.server_type
+  image       = var.operating_system
   location    = var.region
   keep_disk   = true
   labels = {
@@ -18,7 +26,7 @@ resource "hcloud_server" "clickhouse" {
     "http" = "yes"
   }
 
-  user_data = data.cloudinit_config.cloud_config_clickhouse.rendered
+  user_data = data.template_file.cloud_init.rendered
   
   network {
     network_id = data.hcloud_network.private_network.id
@@ -29,15 +37,5 @@ resource "hcloud_server" "clickhouse" {
   public_net {
     ipv4_enabled = true
     ipv6_enabled = true
-  }
-}
-
-data "cloudinit_config" "cloud_config_clickhouse" {
-  gzip          = false
-  base64_encode = false
-
-  part {
-    content_type = "text/cloud-config"
-    content      = file("${path.module}/cloudinit/base.yml")
   }
 }
