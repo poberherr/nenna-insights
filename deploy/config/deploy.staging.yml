@@ -2,16 +2,11 @@ service: nenna-clickhouse
 
 image: nenna-ai-gmbh/nenna-clickhouse
 
-env:
-  # This is the minimal set of environment variables needed to run the app
-  # in production. You can add more here and in the .env file as needed.
-  # clear:
-  #   CLOUD_BASE_URL: https://staging.nenna.ai
-  #   LOGLEVEL: DEBUG
-  #   ROOT: "/clickhouse"
-
 # https://kamal-deploy.org/docs/configuration#using-different-roles-for-servers
-# servers:
+servers:
+  clickhouse:
+    hosts:
+      - 157.90.24.158
 
 # # https://kamal-deploy.org/docs/configuration#using-a-custom-healthcheck
 # healthcheck:
@@ -28,7 +23,7 @@ ssh:
 # Set multiarch to false for better performance if you are building your image on the same architecture as your server
 builder:
   multiarch: true
-  dockerfile: "../Dockerfile.web"
+  # dockerfile: "../Dockerfile.web"
   context: "../"
 
 # See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
@@ -46,8 +41,8 @@ accessories:
     options:
       network: nenna-clickhouse-network
     port:
-      - 9000:9000 # Native Port
-      - 8123:8123 # HTTP Port
+      # - 9000:9000 # Native Port
+      8123:8123 # HTTP Port
     env:
       clear:
         CLICKHOUSE_HOST: clickhouse-docker-server

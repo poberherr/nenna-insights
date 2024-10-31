@@ -2,35 +2,10 @@ service: nenna-clickhouse
 
 image: nenna-ai-gmbh/nenna-clickhouse
 
-env:
-  # This is the minimal set of environment variables needed to run the app
-  # in production. You can add more here and in the .env file as needed.
-  clear:
-    CLOUD_BASE_URL:
-    LOGLEVEL:
-    ROOT: "/"
-
-# https://kamal-deploy.org/docs/configuration#using-different-roles-for-servers
 servers:
-  web:
+  clickhouse:
     hosts:
-      -
-    options:
-      expose: "8000"
-      network: nenna-clickhouse-network
-    labels:
-      traefik.http.routers.nenna-clickhouse.rule: Host(`app.nenna.ai`)
-      traefik.http.routers.nenna-clickhouse_secure.entrypoints: websecure
-      traefik.http.routers.nenna-clickhouse_secure.rule: Host(`app.nenna.ai`)
-      traefik.http.routers.nenna-clickhouse_secure.tls: true
-      traefik.http.routers.nenna-clickhouse_secure.tls.certresolver: letsencrypt
-
-# https://kamal-deploy.org/docs/configuration#using-a-custom-healthcheck
-healthcheck:
-  path: /latest/health
-  port: 8000
-  max_attempts: 15
-  interval: 20s
+      - 157.90.24.158
 
 # To use a non-root user see https://kamal-deploy.org/docs/configuration#using-a-different-ssh-user-than-root
 ssh:
@@ -38,29 +13,32 @@ ssh:
 
 # https://kamal-deploy.org/docs/configuration#using-a-different-dockerfile-or-context-when-building
 # Set multiarch to false for better performance if you are building your image on the same architecture as your server
-builder:
-  multiarch: true
-  dockerfile: "../Dockerfile.web"
-  context: "../"
+# builder:
+#   multiarch: true
+#   # dockerfile: "../Dockerfile.web"
+#   context: "../"
 
 # See https://kamal-deploy.org/docs/configuration#using-another-registry-than-docker-hub
+# TODO: Add service user for ghcr.io
 registry:
   server: ghcr.io
   username: fugufisch
   password:
     - KAMAL_REGISTRY_PASSWORD
 
-traefik:
-  options:
-    network: nenna-clickhouse-network
-    publish:
-      - 443:443
-    volume:
-      - "/letsencrypt/acme.json:/letsencrypt/acme.json"
-  args:
-    entryPoints.web.address: ":80"
-    entryPoints.websecure.address: ":443"
-    certificatesResolvers.letsencrypt.acme.email: "max@nenna.ai"
-    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
-    certificatesResolvers.letsencrypt.acme.httpchallenge: true
-    certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web
+accessories:
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    host: 157.90.24.158
+    options:
+      network: nenna-clickhouse-network
+    port:
+      # - 9000:9000 # Native Port
+      8123:8123 # HTTP Port
+    env:
+      clear:
+        CLICKHOUSE_HOST: clickhouse-docker-server
+        CLICKHOUSE_PORT: 8123
+        CLICKHOUSE_USERNAME: default
+      secret:
+        - CLICKHOUSE_PASSWORD
