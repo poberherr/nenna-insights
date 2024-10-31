@@ -26,3 +26,8 @@ variable "server_count" {
   type    = number
   default = 1
 }
+
+variable "clickhouse_password" {
+  type    = string
+  default = ""
+}
