@@ -16,6 +16,7 @@ users:
   - name: kamal
     groups:
       - sudo
+      - docker
     sudo:
       - ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
@@ -36,6 +37,28 @@ write_files:
                 - 1.1.1.1
                 - 1.0.0.1
     permissions: "0600"
+  - path: /home/kamal/docker-compose.yml
+    content: |
+      version: '3.8'
+
+      services:
+        clickhouse:
+          image: clickhouse/clickhouse-server
+          networks:
+            - nenna-clickhouse-network
+          ports:
+            - "8123:8123"
+          environment:
+            - CLICKHOUSE_HOST=clickhouse-docker-server
+            - CLICKHOUSE_PORT=8123
+            - CLICKHOUSE_USERNAME=default
+            - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+
+      networks:
+        nenna-clickhouse-network:
+          external: true
+    permissions: "0644"
+    owner: kamal:kamal
 
 runcmd:
   - netplan apply
@@ -45,4 +68,7 @@ runcmd:
   - usermod -aG docker kamal
   - docker network create nenna-clickhouse-network
   - snap install btop
+  - mkdir -p /usr/local/lib/docker/cli-plugins
+  - curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+  - chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
   - reboot
