@@ -24,6 +24,25 @@ users:
       - gh:poberherr
     uid: 1000
 
+  - name: patrick
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    ssh_import_id:
+      - gh:poberherr
+    uid: 1001
+
+  - name: max
+    groups:
+      - sudo
+    sudo:
+      - ALL=(ALL) NOPASSWD:ALL
+    ssh_import_id:
+      - gh:fugufisch
+    uid: 1002
+
+
 write_files:
   - path: /etc/netplan/01-netplan.yaml
     content: |
